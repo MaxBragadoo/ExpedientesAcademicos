@@ -11,6 +11,7 @@ class VentanaReportes:
         self.ventana.title("Módulo de Reportes")
         self.ventana.geometry("850x500")
         self.ventana.resizable(False, False)
+        self.ventana.configure(bg="#e6f0f9")
 
         self.crear_widgets()
 
