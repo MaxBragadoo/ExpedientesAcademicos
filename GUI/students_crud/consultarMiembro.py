@@ -7,6 +7,7 @@ def crear_conexion():
     try:
         conexion = mysql.connector.connect(
             host='localhost',
+            port=3307,
             user='root',
             password='',
             database='gestion_academica'
@@ -24,12 +25,21 @@ class ConsultarEstudiantesScreen:
         
     def create_widgets(self):
         """Crea todos los componentes de la interfaz"""
+        # Configuración de estilos
+        button_style = {
+            "height": 38,
+            "corner_radius": 8,
+            "font": ctk.CTkFont(size=14, weight="bold"),
+            "border_width": 1,
+            "hover": True
+        }
+        
         # Título
         ctk.CTkLabel(
             self.frame,
             text="Consulta de Estudiantes",
             font=ctk.CTkFont(size=24, weight="bold")
-        ).pack(pady=20)
+        ).pack(pady=(20, 15))
         
         # Panel de filtros
         filter_frame = ctk.CTkFrame(self.frame, fg_color="transparent")
@@ -41,7 +51,11 @@ class ConsultarEstudiantesScreen:
             filter_frame,
             textvariable=self.search_var,
             placeholder_text="Buscar por ID, nombre, apellido o carrera...",
-            width=300
+            width=350,
+            height=38,
+            font=ctk.CTkFont(size=14),
+            border_width=1,
+            corner_radius=8
         )
         self.search_entry.pack(side="left", padx=(0, 10))
         
@@ -49,27 +63,44 @@ class ConsultarEstudiantesScreen:
         ctk.CTkButton(
             filter_frame,
             text="Buscar",
-            width=100,
-            command=self.filtrar_estudiantes
+            fg_color=("#5a6b8a", "#4a5b7a"),  # Azul grisáceo formal
+            hover_color=("#4a5b7a", "#3a4b6a"),
+            border_color=("#4a5b7a", "#3a4b6a"),
+            width=120,
+            command=self.filtrar_estudiantes,
+            **button_style
         ).pack(side="left", padx=5)
         
         ctk.CTkButton(
             filter_frame,
             text="Mostrar Todos",
-            width=100,
-            command=self.mostrar_todos
+            fg_color=("#6a5a8a", "#5a4a7a"),  # Púrpura oscuro formal
+            hover_color=("#5a4a7a", "#4a3a6a"),
+            border_color=("#5a4a7a", "#4a3a6a"),
+            width=120,
+            command=self.mostrar_todos,
+            **button_style
         ).pack(side="left", padx=5)
         
         # Lista de estudiantes
-        self.list_container = ctk.CTkScrollableFrame(self.frame, height=400)
+        self.list_container = ctk.CTkScrollableFrame(
+            self.frame, 
+            height=400,
+            fg_color=("#f8f8f8", "#2a2a2a")
+        )
         self.list_container.pack(fill="both", expand=True, padx=20, pady=10)
         
         # Botón de volver
         ctk.CTkButton(
             self.frame,
             text="Volver",
-            command=self.cerrar
-        ).pack(pady=20)
+            fg_color=("#8a4a4a", "#7a3a3a"),  # Rojo vino formal
+            hover_color=("#7a3a3a", "#6a2a2a"),
+            border_color=("#7a3a3a", "#6a2a2a"),
+            width=120,
+            command=self.cerrar,
+            **button_style
+        ).pack(pady=(10, 20))
         
         # Cargar todos los estudiantes inicialmente
         self.mostrar_todos()
@@ -99,7 +130,12 @@ class ConsultarEstudiantesScreen:
             return
         
         # Crear encabezados de la tabla
-        header_frame = ctk.CTkFrame(self.list_container)
+        header_frame = ctk.CTkFrame(
+            self.list_container,
+            fg_color=("#e0e0e0", "#3a3a3a"),
+            height=40,
+            corner_radius=6
+        )
         header_frame.pack(fill="x", pady=(0, 5))
         
         headers = ["ID", "Nombre", "Apellido", "Carrera", "Teléfono", "Correo", "Acciones"]
@@ -110,16 +146,24 @@ class ConsultarEstudiantesScreen:
                 header_frame,
                 text=header,
                 font=ctk.CTkFont(size=12, weight="bold"),
-                width=column_widths[i]
+                width=column_widths[i],
+                text_color=("#333333", "#ffffff")
             ).grid(row=0, column=i, padx=2, sticky="w")
         
         # Mostrar cada estudiante
-        for estudiante in estudiantes:
-            self.crear_item_estudiante(estudiante, column_widths)
+        for idx, estudiante in enumerate(estudiantes):
+            # Alternar colores de fondo para mejor legibilidad
+            bg_color = ("#ffffff", "#2a2a2a") if idx % 2 == 0 else ("#f0f0f0", "#333333")
+            self.crear_item_estudiante(estudiante, column_widths, bg_color)
     
-    def crear_item_estudiante(self, estudiante, column_widths):
+    def crear_item_estudiante(self, estudiante, column_widths, bg_color):
         """Crea un item de estudiante en la lista"""
-        item_frame = ctk.CTkFrame(self.list_container)
+        item_frame = ctk.CTkFrame(
+            self.list_container,
+            fg_color=bg_color,
+            height=40,
+            corner_radius=6
+        )
         item_frame.pack(fill="x", pady=2)
         
         # Configurar grid para el item
@@ -130,49 +174,59 @@ class ConsultarEstudiantesScreen:
         ctk.CTkLabel(
             item_frame,
             text=str(estudiante['id']),
-            width=column_widths[0]
+            width=column_widths[0],
+            font=ctk.CTkFont(size=12)
         ).grid(row=0, column=0, padx=2, sticky="w")
         
         # Nombre
         ctk.CTkLabel(
             item_frame,
             text=estudiante['nombre'],
-            width=column_widths[1]
+            width=column_widths[1],
+            font=ctk.CTkFont(size=12)
         ).grid(row=0, column=1, padx=2, sticky="w")
         
         # Apellido
         ctk.CTkLabel(
             item_frame,
             text=estudiante['apellido'],
-            width=column_widths[2]
+            width=column_widths[2],
+            font=ctk.CTkFont(size=12)
         ).grid(row=0, column=2, padx=2, sticky="w")
         
         # Carrera
         ctk.CTkLabel(
             item_frame,
             text=estudiante['carrera'],
-            width=column_widths[3]
+            width=column_widths[3],
+            font=ctk.CTkFont(size=12)
         ).grid(row=0, column=3, padx=2, sticky="w")
         
         # Teléfono
         ctk.CTkLabel(
             item_frame,
             text=estudiante['telefono'],
-            width=column_widths[4]
+            width=column_widths[4],
+            font=ctk.CTkFont(size=12)
         ).grid(row=0, column=4, padx=2, sticky="w")
         
         # Correo
         ctk.CTkLabel(
             item_frame,
             text=estudiante['correo_electronico'],
-            width=column_widths[5]
+            width=column_widths[5],
+            font=ctk.CTkFont(size=12)
         ).grid(row=0, column=5, padx=2, sticky="w")
         
         # Botón de seleccionar
         ctk.CTkButton(
             item_frame,
             text="Ver",
-            width=column_widths[6],
+            fg_color=("#4a7c59", "#3a6b49"),  # Verde oscuro formal
+            hover_color=("#3a6b49", "#2a5a39"),
+            border_color=("#3a6b49", "#2a5a39"),
+            width=column_widths[6]-10,
+            font=ctk.CTkFont(size=12, weight="bold"),
             command=lambda e=estudiante: self.mostrar_detalles(e)
         ).grid(row=0, column=6, padx=2)
     
@@ -185,19 +239,38 @@ class ConsultarEstudiantesScreen:
         # Botón para volver a la lista
         ctk.CTkButton(
             self.list_container,
-            text="Volver a la lista",
+            text="← Volver a la lista",
+            fg_color=("#5a6b8a", "#4a5b7a"),  # Azul grisáceo formal
+            hover_color=("#4a5b7a", "#3a4b6a"),
+            border_color=("#4a5b7a", "#3a4b6a"),
+            width=150,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
             command=self.filtrar_estudiantes
         ).pack(pady=(0, 20), anchor="w")
         
         # Marco para los detalles
-        details_frame = ctk.CTkFrame(self.list_container)
+        details_frame = ctk.CTkFrame(
+            self.list_container,
+            fg_color=("#f0f0f0", "#333333"),
+            corner_radius=10
+        )
         details_frame.pack(fill="x", pady=10, padx=10)
+        
+        # Título de detalles
+        ctk.CTkLabel(
+            details_frame,
+            text=f"Detalles del Estudiante: {estudiante['nombre']} {estudiante['apellido']}",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=("#333333", "#ffffff")
+        ).pack(pady=(15, 10), padx=15, anchor="w")
         
         # Mostrar todos los campos del estudiante
         campos = [
             ("ID", estudiante['id']),
             ("Nombre", estudiante['nombre']),
-            ("Apellido", estudiante['apellido']),  # Nuevo campo
+            ("Apellido", estudiante['apellido']),
             ("Carrera", estudiante['carrera']),
             ("Fecha de Nacimiento", estudiante['fecha_nacimiento'].strftime('%Y-%m-%d')),
             ("Género", estudiante['genero']),
@@ -211,22 +284,24 @@ class ConsultarEstudiantesScreen:
         
         for i, (campo, valor) in enumerate(campos):
             row_frame = ctk.CTkFrame(details_frame, fg_color="transparent")
-            row_frame.pack(fill="x", pady=2)
+            row_frame.pack(fill="x", pady=3, padx=15)
             
             ctk.CTkLabel(
                 row_frame,
                 text=f"{campo}:",
-                font=ctk.CTkFont(size=12, weight="bold"),
+                font=ctk.CTkFont(size=13, weight="bold"),
                 width=180,
-                anchor="e"
+                anchor="e",
+                text_color=("#555555", "#dddddd")
             ).pack(side="left", padx=5)
             
             ctk.CTkLabel(
                 row_frame,
                 text=valor,
-                font=ctk.CTkFont(size=12),
+                font=ctk.CTkFont(size=13),
                 wraplength=400,
-                justify="left"
+                justify="left",
+                text_color=("#333333", "#ffffff")
             ).pack(side="left", padx=5)
     
     def obtener_estudiantes_db(self, filtro=None):

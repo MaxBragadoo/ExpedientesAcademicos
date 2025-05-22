@@ -17,6 +17,8 @@ class App(ctk.CTk):
         self.geometry("1400x800")
         self.minsize(1000, 600)
         
+        self.iconbitmap(default='')
+        
         # Inicializar el menú principal
         self.menu = Menu(self)
         
@@ -24,26 +26,13 @@ class App(ctk.CTk):
         self.center_window()
     
     def center_window(self):
-        """Centra la ventana en la pantalla después de que los widgets estén creados"""
-        self.update_idletasks()  # Actualiza las tareas pendientes para calcular tamaños reales
-        
+        """Centra la ventana en la pantalla"""
+        self.update_idletasks()
         width = self.winfo_width()
         height = self.winfo_height()
-        
-        # Si las dimensiones son 1x1 (no se han calculado aún), usa las dimensiones por defecto
-        if width <= 1 or height <= 1:
-            width = 1400
-            height = 800
-            self.geometry(f"{width}x{height}")
-            self.update_idletasks()  # Vuelve a actualizar con el nuevo tamaño
-        
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-        
-        self.geometry(f"+{x}+{y}")
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
 
 
 class Menu(ctk.CTkFrame):
@@ -75,15 +64,18 @@ class Menu(ctk.CTkFrame):
         # Botón principal del menú
         self.btn_miembros = ctk.CTkButton(
             self,
-            text="👥 Gestión de Estudiantes",
+            text="Gestión de Estudiantes",
             command=self.miembros,
             width=220,
-            height=40,
+            height=45,  # Aumentado el tamaño
             corner_radius=8,
             anchor="w",
-            font=ctk.CTkFont(size=14),
-            fg_color=("#3a7ebf", "#1f538d"),  # Resaltado por defecto
-            text_color=("#ffffff", "#ffffff")
+            font=ctk.CTkFont(size=14, weight="bold"),  # Texto en negrita
+            fg_color=("#3a5f8a", "#2a4a6f"),  # Azul oscuro más formal
+            hover_color=("#2d4a6b", "#1f3a5a"),  # Hover más oscuro
+            text_color=("#ffffff", "#ffffff"),
+            border_width=1,
+            border_color=("#2a4a6f", "#1f3a5a")
         )
         self.btn_miembros.pack(pady=5, padx=10)
         
@@ -92,12 +84,14 @@ class Menu(ctk.CTkFrame):
             self.parent, 
             text="☰", 
             command=self.toggle_menu, 
-            width=40, 
-            height=40,
+            width=45,  # Aumentado el tamaño
+            height=45,
             corner_radius=20,
             fg_color=("#f0f0f0", "#2b2b2b"),
-            hover_color=("#e0e0e0", "#3a3a3a"),
-            font=ctk.CTkFont(size=16)
+            hover_color=("#d0d0d0", "#3a3a3a"),
+            font=ctk.CTkFont(size=18),
+            border_width=1,
+            border_color=("#d0d0d0", "#3a3a3a")
         )
         self.btn_toggle.place(x=260, y=10)
         
@@ -127,36 +121,58 @@ class Menu(ctk.CTkFrame):
         crud_frame = ctk.CTkFrame(frame, fg_color="transparent")
         crud_frame.pack(pady=(0, 20))
         
+        # Configuración común para botones
+        button_style = {
+            "width": 110,  # Aumentado el ancho
+            "height": 40,  # Aumentado el alto
+            "corner_radius": 8,
+            "font": ctk.CTkFont(size=14, weight="bold"),
+            "border_width": 1,
+            "hover": True
+        }
+        
         # Botones de operaciones
         ctk.CTkButton(
             crud_frame,
             text="Agregar",
-            width=100,
-            command=self.agregar_miembro
-        ).pack(side="left", padx=5)
+            fg_color=("#4a7c59", "#3a6b49"),  # Verde oscuro formal
+            hover_color=("#3a6b49", "#2a5a39"),
+            border_color=("#3a6b49", "#2a5a39"),
+            command=self.agregar_miembro,
+            **button_style
+        ).pack(side="left", padx=5, pady=5)
+        
+        ctk.CTkButton(
+            crud_frame,
+            text="Consultar",
+            fg_color=("#6a5a8a", "#5a4a7a"),  # Púrpura oscuro formal
+            hover_color=("#5a4a7a", "#4a3a6a"),
+            border_color=("#5a4a7a", "#4a3a6a"),
+            command=self.consultar_miembro,
+            **button_style
+        ).pack(side="left", padx=5, pady=5)
 
         ctk.CTkButton(
             crud_frame,
             text="Editar",
-            width=100,
-            command=self.editar_miembro
-        ).pack(side="left", padx=5)
+            fg_color=("#5a6b8a", "#4a5b7a"),  # Azul grisáceo formal
+            hover_color=("#4a5b7a", "#3a4b6a"),
+            border_color=("#4a5b7a", "#3a4b6a"),
+            command=self.editar_miembro,
+            **button_style
+        ).pack(side="left", padx=5, pady=5)
 
-        ctk.CTkButton(
-            crud_frame,
-            text="Consultar",
-            width=100,
-            command=self.consultar_miembro
-        ).pack(side="left", padx=5)
+       
 
         ctk.CTkButton(
             crud_frame,
             text="Eliminar",
-            width=100,
-            fg_color="#d9534f",
-            hover_color="#c9302c",
-            command=self.eliminar_miembro
-        ).pack(side="left", padx=5)
+            fg_color=("#8a4a4a", "#7a3a3a"),  # Rojo vino formal
+            hover_color=("#7a3a3a", "#6a2a2a"),
+            border_color=("#7a3a3a", "#6a2a2a"),
+            command=self.eliminar_miembro,
+            **button_style
+        ).pack(side="left", padx=5, pady=5)
 
         # Lista de miembros (con scroll)
         self.member_list_frame = ctk.CTkScrollableFrame(frame, height=300)
@@ -220,7 +236,7 @@ class Menu(ctk.CTkFrame):
         """Muestra la pantalla de gestión de miembros"""
         self.screen_miembros.pack(fill="both", expand=True)
         self.btn_miembros.configure(
-            fg_color=("#3a7ebf", "#1f538d"),
+            fg_color=("#3a5f8a", "#2a4a6f"),
             text_color=("#ffffff", "#ffffff")
         )
 

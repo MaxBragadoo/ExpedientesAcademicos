@@ -7,6 +7,7 @@ def crear_conexion():
     try:
         conexion = mysql.connector.connect(
             host='localhost',
+            port=3307,
             user='root',
             password='',
             database='gestion_academica'
@@ -28,7 +29,7 @@ class EliminarMiembroScreen:
         # Título
         ctk.CTkLabel(
             self.frame,
-            text="Eliminar Miembro",
+            text="Eliminar Estudiante",
             font=ctk.CTkFont(size=24, weight="bold")
         ).pack(pady=20)
         
@@ -67,7 +68,7 @@ class EliminarMiembroScreen:
         
         self.delete_button = ctk.CTkButton(
             button_frame,
-            text="Eliminar Miembro",
+            text="Eliminar Estudiante",
             fg_color="#d9534f",
             hover_color="#c9302c",
             command=self.confirmar_eliminacion

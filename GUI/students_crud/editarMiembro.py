@@ -7,6 +7,7 @@ def crear_conexion():
     try:
         conexion = mysql.connector.connect(
             host='localhost',
+            port=3307,
             user='root',
             password='',
             database='gestion_academica'
@@ -25,12 +26,27 @@ class EditarMiembroScreen:
         
     def create_widgets(self):
         """Crea todos los componentes de la interfaz"""
+        # Configuración de estilos
+        button_style = {
+            "height": 38,
+            "corner_radius": 8,
+            "font": ctk.CTkFont(size=14, weight="bold"),
+            "border_width": 1
+        }
+        
+        entry_style = {
+            "height": 36,
+            "corner_radius": 6,
+            "font": ctk.CTkFont(size=13),
+            "border_width": 1
+        }
+        
         # Título
         ctk.CTkLabel(
             self.frame,
-            text="Editar Miembro",
+            text="Editar Estudiante",
             font=ctk.CTkFont(size=24, weight="bold")
-        ).pack(pady=20)
+        ).pack(pady=(20, 15))
         
         # Panel de búsqueda
         search_frame = ctk.CTkFrame(self.frame, fg_color="transparent")
@@ -42,41 +58,61 @@ class EditarMiembroScreen:
             search_frame,
             textvariable=self.search_var,
             placeholder_text="Buscar por ID, nombre, apellido o carrera...",
-            width=300
+            width=350,
+            **entry_style
         ).pack(side="left", padx=(0, 10))
         
-        # Botones de búsqueda
+        # Botón de búsqueda
         ctk.CTkButton(
             search_frame,
             text="Buscar",
-            width=100,
-            command=self.buscar_estudiantes
+            fg_color=("#5a6b8a", "#4a5b7a"),  # Azul grisáceo formal
+            hover_color=("#4a5b7a", "#3a4b6a"),
+            border_color=("#4a5b7a", "#3a4b6a"),
+            width=120,
+            command=self.buscar_estudiantes,
+            **button_style
         ).pack(side="left", padx=5)
         
         # Lista de resultados
-        self.results_frame = ctk.CTkScrollableFrame(self.frame, height=150)
+        self.results_frame = ctk.CTkScrollableFrame(
+            self.frame, 
+            height=180,
+            fg_color=("#f8f8f8", "#2a2a2a")
+        )
         self.results_frame.pack(fill="x", padx=20, pady=10)
         
         # Formulario de edición
-        self.form_frame = ctk.CTkFrame(self.frame)
-        self.form_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        self.form_frame = ctk.CTkFrame(
+            self.frame,
+            fg_color=("#f0f0f0", "#333333"),
+            corner_radius=10
+        )
         
         # Botones de acción
         button_frame = ctk.CTkFrame(self.frame, fg_color="transparent")
-        button_frame.pack(pady=20)
+        button_frame.pack(pady=(10, 20))
         
         ctk.CTkButton(
             button_frame,
             text="Guardar Cambios",
-            command=self.guardar_cambios
+            fg_color=("#4a7c59", "#3a6b49"),  # Verde oscuro formal
+            hover_color=("#3a6b49", "#2a5a39"),
+            border_color=("#3a6b49", "#2a5a39"),
+            width=150,
+            command=self.guardar_cambios,
+            **button_style
         ).pack(side="left", padx=10)
         
         ctk.CTkButton(
             button_frame,
             text="Cancelar",
-            fg_color="#d9534f",
-            hover_color="#c9302c",
-            command=self.cerrar
+            fg_color=("#8a4a4a", "#7a3a3a"),  # Rojo vino formal
+            hover_color=("#7a3a3a", "#6a2a2a"),
+            border_color=("#7a3a3a", "#6a2a2a"),
+            width=120,
+            command=self.cerrar,
+            **button_style
         ).pack(side="left", padx=10)
         
         # Inicialmente ocultar el formulario
@@ -106,8 +142,16 @@ class EditarMiembroScreen:
             return
         
         # Mostrar resultados
-        for estudiante in resultados:
-            student_frame = ctk.CTkFrame(self.results_frame)
+        for idx, estudiante in enumerate(resultados):
+            # Alternar colores de fondo para mejor legibilidad
+            bg_color = ("#ffffff", "#2a2a2a") if idx % 2 == 0 else ("#f0f0f0", "#333333")
+            
+            student_frame = ctk.CTkFrame(
+                self.results_frame,
+                fg_color=bg_color,
+                height=40,
+                corner_radius=6
+            )
             student_frame.pack(fill="x", pady=2)
             
             # Mostrar información básica
@@ -116,14 +160,20 @@ class EditarMiembroScreen:
             ctk.CTkLabel(
                 student_frame,
                 text=info_text,
-                font=ctk.CTkFont(size=12)
-            ).pack(side="left", padx=10)
+                font=ctk.CTkFont(size=12),
+                text_color=("#333333", "#ffffff")
+            ).pack(side="left", padx=10, expand=True, fill="x")
             
             # Botón de selección
             ctk.CTkButton(
                 student_frame,
                 text="Seleccionar",
+                fg_color=("#5a6b8a", "#4a5b7a"),  # Azul grisáceo formal
+                hover_color=("#4a5b7a", "#3a4b6a"),
+                border_color=("#4a5b7a", "#3a4b6a"),
                 width=100,
+                height=30,
+                font=ctk.CTkFont(size=12, weight="bold"),
                 command=lambda e=estudiante: self.cargar_estudiante(e)
             ).pack(side="right", padx=5)
     
@@ -144,95 +194,132 @@ class EditarMiembroScreen:
     
     def crear_formulario_edicion(self):
         """Crea los campos del formulario de edición"""
+        # Configuración de estilos
+        label_style = {
+            "font": ctk.CTkFont(size=13, weight="bold"),
+            "text_color": ("#555555", "#dddddd")
+        }
+        
+        entry_style = {
+            "height": 36,
+            "corner_radius": 6,
+            "font": ctk.CTkFont(size=13),
+            "border_width": 1
+        }
+        
         # Configurar grid
         self.form_frame.grid_columnconfigure(1, weight=1)
+        self.form_frame.grid_columnconfigure(2, minsize=20)  # Espacio entre columnas
         row = 0
         
+        # Título del formulario
+        ctk.CTkLabel(
+            self.form_frame,
+            text=f"Editando: {self.current_student['nombre']} {self.current_student['apellido']}",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=("#333333", "#ffffff")
+        ).grid(row=row, column=0, columnspan=3, pady=(15, 20), padx=15, sticky="w")
+        row += 1
+        
         # ID (no editable)
-        ctk.CTkLabel(self.form_frame, text="ID:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.id_label = ctk.CTkLabel(self.form_frame, text="", font=ctk.CTkFont(size=12))
+        ctk.CTkLabel(self.form_frame, text="ID:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.id_label = ctk.CTkLabel(
+            self.form_frame, 
+            text="", 
+            font=ctk.CTkFont(size=13),
+            text_color=("#333333", "#ffffff")
+        )
         self.id_label.grid(row=row, column=1, padx=10, pady=5, sticky="w")
         row += 1
         
         # Nombre
-        ctk.CTkLabel(self.form_frame, text="Nombre(s):").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.nombre_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Nombre(s):", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.nombre_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.nombre_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Apellido
-        ctk.CTkLabel(self.form_frame, text="Apellido:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.apellido_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Apellido:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.apellido_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.apellido_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Carrera
-        ctk.CTkLabel(self.form_frame, text="Carrera:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.carrera_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Carrera:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.carrera_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.carrera_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Fecha de Nacimiento
-        ctk.CTkLabel(self.form_frame, text="Fecha Nacimiento:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.fecha_nac_entry = ctk.CTkEntry(self.form_frame, placeholder_text="AAAA-MM-DD")
+        ctk.CTkLabel(self.form_frame, text="Fecha Nacimiento:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.fecha_nac_entry = ctk.CTkEntry(
+            self.form_frame, 
+            placeholder_text="AAAA-MM-DD",
+            **entry_style
+        )
         self.fecha_nac_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Género
-        ctk.CTkLabel(self.form_frame, text="Género:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
+        ctk.CTkLabel(self.form_frame, text="Género:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
         self.genero_combobox = ctk.CTkComboBox(
             self.form_frame,
-            values=["Masculino", "Femenino", "Otro"]
+            values=["Masculino", "Femenino", "Otro"],
+            height=36,
+            corner_radius=6,
+            font=ctk.CTkFont(size=13),
+            dropdown_font=ctk.CTkFont(size=13),
+            border_width=1
         )
         self.genero_combobox.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Nacionalidad
-        ctk.CTkLabel(self.form_frame, text="Nacionalidad:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.nacionalidad_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Nacionalidad:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.nacionalidad_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.nacionalidad_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Dirección
-        ctk.CTkLabel(self.form_frame, text="Dirección:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.direccion_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Dirección:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.direccion_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.direccion_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Teléfono
-        ctk.CTkLabel(self.form_frame, text="Teléfono:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.telefono_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Teléfono:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.telefono_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.telefono_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Correo Electrónico
-        ctk.CTkLabel(self.form_frame, text="Correo Electrónico:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.correo_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Correo Electrónico:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.correo_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.correo_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Contacto de Emergencia - Nombre
-        ctk.CTkLabel(self.form_frame, text="Contacto Emergencia:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.contacto_nombre_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Contacto Emergencia:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.contacto_nombre_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.contacto_nombre_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Contacto de Emergencia - Relación
-        ctk.CTkLabel(self.form_frame, text="Relación:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.contacto_relacion_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Relación:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.contacto_relacion_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.contacto_relacion_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
         
         # Contacto de Emergencia - Teléfono
-        ctk.CTkLabel(self.form_frame, text="Teléfono Emergencia:").grid(row=row, column=0, padx=10, pady=5, sticky="e")
-        self.contacto_telefono_entry = ctk.CTkEntry(self.form_frame)
+        ctk.CTkLabel(self.form_frame, text="Teléfono Emergencia:", **label_style).grid(row=row, column=0, padx=15, pady=5, sticky="e")
+        self.contacto_telefono_entry = ctk.CTkEntry(self.form_frame, **entry_style)
         self.contacto_telefono_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
     
     def cargar_datos_formulario(self, estudiante):
         """Carga los datos del estudiante en los campos del formulario"""
         self.id_label.configure(text=str(estudiante['id']))
         self.nombre_entry.insert(0, estudiante['nombre'])
-        self.apellido_entry.insert(0, estudiante['apellido'])  # Nuevo campo
+        self.apellido_entry.insert(0, estudiante['apellido'])
         self.carrera_entry.insert(0, estudiante['carrera'])
         self.fecha_nac_entry.insert(0, estudiante['fecha_nacimiento'].strftime('%Y-%m-%d'))
         self.genero_combobox.set(estudiante['genero'])
@@ -253,7 +340,7 @@ class EditarMiembroScreen:
         # Validar campos obligatorios
         if not all([
             self.nombre_entry.get().strip(),
-            self.apellido_entry.get().strip(),  # Nuevo campo obligatorio
+            self.apellido_entry.get().strip(),
             self.carrera_entry.get().strip(),
             self.fecha_nac_entry.get().strip(),
             self.genero_combobox.get().strip(),
@@ -272,7 +359,7 @@ class EditarMiembroScreen:
         datos_actualizados = {
             'id': self.current_student['id'],
             'nombre': self.nombre_entry.get().strip(),
-            'apellido': self.apellido_entry.get().strip(),  # Nuevo campo
+            'apellido': self.apellido_entry.get().strip(),
             'carrera': self.carrera_entry.get().strip(),
             'fecha_nacimiento': self.fecha_nac_entry.get().strip(),
             'genero': self.genero_combobox.get(),
@@ -319,7 +406,7 @@ class EditarMiembroScreen:
             
             cursor.execute(query, (
                 estudiante_data['nombre'],
-                estudiante_data['apellido'],  # Nuevo campo
+                estudiante_data['apellido'],
                 estudiante_data['carrera'],
                 estudiante_data['fecha_nacimiento'],
                 estudiante_data['genero'],

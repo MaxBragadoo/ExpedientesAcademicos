@@ -9,6 +9,7 @@ def crear_conexion():
     try:
         conexion = mysql.connector.connect(
             host='localhost',
+            port=3307,
             user='root',
             password='',
             database='gestion_academica'
