@@ -1,168 +1,248 @@
+import customtkinter as ctk
+from tkinter import messagebox
+from students_crud.consultarMiembro import ConsultarEstudiantesScreen
+from students_crud.crearMiembro import RegistroEstudianteForm
+from students_crud.editarMiembro import EditarMiembroScreen
+from students_crud.eliminarMiembro import EliminarMiembroScreen
 
-
-import tkinter as tk
-from tkinter import messagebox, ttk
-from db.Conexion import crear_conexion
-
-class VentanaEstudiantes:
+class App(ctk.CTk):
     def __init__(self):
-        self.ventana = tk.Toplevel()
-        self.ventana.title("Gestión de Estudiantes")
-        self.ventana.geometry("750x400")
-        self.ventana.resizable(False, False)
+        super().__init__()
+        
+        # Configuración inicial de la ventana
+        ctk.set_appearance_mode("System")  # Modo claro/oscuro según sistema
+        ctk.set_default_color_theme("dark-blue")  # Tema de colores
+        
+        self.title("Gestión de Estudiantes")
+        self.geometry("1400x800")
+        self.minsize(1000, 600)
+        
+        # Inicializar el menú principal
+        self.menu = Menu(self)
+        
+        # Centrar la ventana al iniciar
+        self.center_window()
+    
+    def center_window(self):
+        """Centra la ventana en la pantalla después de que los widgets estén creados"""
+        self.update_idletasks()  # Actualiza las tareas pendientes para calcular tamaños reales
+        
+        width = self.winfo_width()
+        height = self.winfo_height()
+        
+        # Si las dimensiones son 1x1 (no se han calculado aún), usa las dimensiones por defecto
+        if width <= 1 or height <= 1:
+            width = 1400
+            height = 800
+            self.geometry(f"{width}x{height}")
+            self.update_idletasks()  # Vuelve a actualizar con el nuevo tamaño
+        
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        
+        self.geometry(f"+{x}+{y}")
 
-        self.crear_widgets()
-        self.cargar_estudiantes()
 
-    def crear_widgets(self):
-        # Formulario
-        frame_form = tk.Frame(self.ventana)
-        frame_form.pack(side=tk.LEFT, padx=10, pady=10)
+class Menu(ctk.CTkFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.menu_visible = True
+        
+        # Configuración del frame del menú
+        self.configure(width=250, corner_radius=0, fg_color=("#f0f0f0", "#2b2b2b"))
+        self.pack_propagate(False)
+        self.pack(side="left", fill="y", padx=(0, 5))
+        
+        # Logo de la aplicación
+        self.logo_frame = ctk.CTkFrame(self, fg_color="transparent", height=80)
+        self.logo_frame.pack(fill="x", padx=10, pady=(10, 20))
+        
+        self.logo_label = ctk.CTkLabel(
+            self.logo_frame, 
+            text="Administrador", 
+            font=ctk.CTkFont(size=18, weight="bold"),
+            anchor="w"
+        )
+        self.logo_label.pack(fill="x", padx=10)
+        
+        # Separador
+        ctk.CTkLabel(self, text="", height=2, fg_color=("#e0e0e0", "#3a3a3a")).pack(fill="x", pady=5)
+        
+        # Botón principal del menú
+        self.btn_miembros = ctk.CTkButton(
+            self,
+            text="👥 Gestión de Estudiantes",
+            command=self.miembros,
+            width=220,
+            height=40,
+            corner_radius=8,
+            anchor="w",
+            font=ctk.CTkFont(size=14),
+            fg_color=("#3a7ebf", "#1f538d"),  # Resaltado por defecto
+            text_color=("#ffffff", "#ffffff")
+        )
+        self.btn_miembros.pack(pady=5, padx=10)
+        
+        # Botón para ocultar/mostrar menú
+        self.btn_toggle = ctk.CTkButton(
+            self.parent, 
+            text="☰", 
+            command=self.toggle_menu, 
+            width=40, 
+            height=40,
+            corner_radius=20,
+            fg_color=("#f0f0f0", "#2b2b2b"),
+            hover_color=("#e0e0e0", "#3a3a3a"),
+            font=ctk.CTkFont(size=16)
+        )
+        self.btn_toggle.place(x=260, y=10)
+        
+        # Contenedor de las pantallas
+        self.screen_container = ctk.CTkFrame(self.parent, fg_color="transparent")
+        self.screen_container.pack(side="right", fill="both", expand=True, padx=(5, 10), pady=10)
+        
+        # Pantalla inicial (gestión de miembros)
+        self.screen_miembros = self.create_miembros_screen()
+        self.screen_miembros.pack(fill="both", expand=True)
+        
+        # Eventos
+        self.parent.bind("<Configure>", self.ajustar_posicion_toggle)
 
-        tk.Label(frame_form, text="Nombre").grid(row=0, column=0, sticky="e")
-        self.entry_nombre = tk.Entry(frame_form)
-        self.entry_nombre.grid(row=0, column=1)
+    def create_miembros_screen(self):
+        """Crea la pantalla de gestión de miembros"""
+        frame = ctk.CTkFrame(self.screen_container, fg_color="transparent")
+        
+        # Título
+        ctk.CTkLabel(
+            frame, 
+            text="Gestión de Estudiantes", 
+            font=ctk.CTkFont(size=24, weight="bold")
+        ).pack(pady=(20, 10))
 
-        tk.Label(frame_form, text="Apellido").grid(row=1, column=0, sticky="e")
-        self.entry_apellido = tk.Entry(frame_form)
-        self.entry_apellido.grid(row=1, column=1)
+        # Contenedor para botones CRUD
+        crud_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        crud_frame.pack(pady=(0, 20))
+        
+        # Botones de operaciones
+        ctk.CTkButton(
+            crud_frame,
+            text="Agregar",
+            width=100,
+            command=self.agregar_miembro
+        ).pack(side="left", padx=5)
 
-        tk.Label(frame_form, text="Correo").grid(row=2, column=0, sticky="e")
-        self.entry_correo = tk.Entry(frame_form)
-        self.entry_correo.grid(row=2, column=1)
+        ctk.CTkButton(
+            crud_frame,
+            text="Editar",
+            width=100,
+            command=self.editar_miembro
+        ).pack(side="left", padx=5)
 
-        tk.Label(frame_form, text="Teléfono").grid(row=3, column=0, sticky="e")
-        self.entry_telefono = tk.Entry(frame_form)
-        self.entry_telefono.grid(row=3, column=1)
+        ctk.CTkButton(
+            crud_frame,
+            text="Consultar",
+            width=100,
+            command=self.consultar_miembro
+        ).pack(side="left", padx=5)
 
-        tk.Label(frame_form, text="Fecha de nacimiento (YYYY-MM-DD)").grid(row=4, column=0, sticky="e")
-        self.entry_nacimiento = tk.Entry(frame_form)
-        self.entry_nacimiento.grid(row=4, column=1)
+        ctk.CTkButton(
+            crud_frame,
+            text="Eliminar",
+            width=100,
+            fg_color="#d9534f",
+            hover_color="#c9302c",
+            command=self.eliminar_miembro
+        ).pack(side="left", padx=5)
 
-        tk.Button(frame_form, text="Agregar", command=self.agregar_estudiante).grid(row=5, column=0, pady=10)
-        tk.Button(frame_form, text="Actualizar", command=self.actualizar_estudiante).grid(row=5, column=1)
-        tk.Button(frame_form, text="Eliminar", command=self.eliminar_estudiante).grid(row=6, column=0, columnspan=2)
+        # Lista de miembros (con scroll)
+        self.member_list_frame = ctk.CTkScrollableFrame(frame, height=300)
+        self.member_list_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Mensaje inicial (puedes reemplazarlo con datos reales)
+        ctk.CTkLabel(
+            self.member_list_frame, 
+            text="Aquí se mostrarán los miembros registrados",
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=20)
+        
+        return frame
 
-        # Tabla
-        frame_tabla = tk.Frame(self.ventana)
-        frame_tabla.pack(side=tk.RIGHT, padx=10, pady=10)
-
-        self.tabla = ttk.Treeview(frame_tabla, columns=("id", "nombre", "apellido", "correo", "telefono", "nacimiento"), show="headings")
-        for col in self.tabla["columns"]:
-            self.tabla.heading(col, text=col.title())
-            self.tabla.column(col, width=100)
-
-        self.tabla.pack()
-        self.tabla.bind("<<TreeviewSelect>>", self.seleccionar_fila)
-
-    def cargar_estudiantes(self):
-        for row in self.tabla.get_children():
-            self.tabla.delete(row)
-
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("SELECT * FROM estudiantes")
-            for fila in cursor.fetchall():
-                self.tabla.insert("", tk.END, values=fila)
-            conexion.close()
-
-    def agregar_estudiante(self):
-        datos = (
-            self.entry_nombre.get(),
-            self.entry_apellido.get(),
-            self.entry_correo.get(),
-            self.entry_telefono.get(),
-            self.entry_nacimiento.get()
+    # ==================== MÉTODOS PARA GESTIÓN DE MIEMBROS ====================
+    def agregar_miembro(self):
+        """Abre el formulario de registro"""
+        self.limpiar_contenido()
+        RegistroEstudianteForm(
+            root=self.member_list_frame,
+            on_submit=self.guardar_nuevo_estudiante
         )
 
-        if not all(datos):
-            messagebox.showwarning("Campos vacíos", "Todos los campos son obligatorios")
-            return
+    def editar_miembro(self):
+        """Abre la pantalla de edición"""
+        self.limpiar_contenido()
+        EditarMiembroScreen(self.member_list_frame).frame.pack(fill="both", expand=True)
 
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("INSERT INTO estudiantes (nombre, apellido, correo, telefono, fecha_nacimiento) VALUES (%s, %s, %s, %s, %s)", datos)
-            conexion.commit()
-            conexion.close()
-            messagebox.showinfo("Éxito", "Estudiante agregado correctamente")
-            self.cargar_estudiantes()
-            self.limpiar_campos()
+    def consultar_miembro(self):
+        """Abre la pantalla de consulta"""
+        self.limpiar_contenido()
+        ConsultarEstudiantesScreen(self.member_list_frame).frame.pack(fill="both", expand=True)
 
-    def seleccionar_fila(self, event):
-        fila = self.tabla.focus()
-        valores = self.tabla.item(fila, "values")
-        if valores:
-            self.id_estudiante = valores[0]
-            self.entry_nombre.delete(0, tk.END)
-            self.entry_nombre.insert(0, valores[1])
-            self.entry_apellido.delete(0, tk.END)
-            self.entry_apellido.insert(0, valores[2])
-            self.entry_correo.delete(0, tk.END)
-            self.entry_correo.insert(0, valores[3])
-            self.entry_telefono.delete(0, tk.END)
-            self.entry_telefono.insert(0, valores[4])
-            self.entry_nacimiento.delete(0, tk.END)
-            self.entry_nacimiento.insert(0, valores[5])
+    def eliminar_miembro(self):
+        """Abre la pantalla de eliminación"""
+        self.limpiar_contenido()
+        EliminarMiembroScreen(self.member_list_frame).frame.pack(fill="both", expand=True)
 
-    def actualizar_estudiante(self):
-        if not hasattr(self, 'id_estudiante'):
-            messagebox.showwarning("Error", "Selecciona un estudiante para actualizar")
-            return
+    def guardar_nuevo_estudiante(self, estudiante_data):
+        """Simula guardar en base de datos (debes implementar esto)"""
+        messagebox.showinfo("Éxito", f"Se guardó: {estudiante_data}")
+        self.limpiar_contenido()
+        self.cargar_miembros()
 
-        datos = (
-            self.entry_nombre.get(),
-            self.entry_apellido.get(),
-            self.entry_correo.get(),
-            self.entry_telefono.get(),
-            self.entry_nacimiento.get(),
-            self.id_estudiante
+    def cargar_miembros(self):
+        """Simula carga de miembros (implementa tu lógica real aquí)"""
+        self.limpiar_contenido()
+        ctk.CTkLabel(
+            self.member_list_frame, 
+            text="Lista actualizada de miembros",
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=20)
+
+    def limpiar_contenido(self):
+        """Limpia el área de contenido"""
+        for widget in self.member_list_frame.winfo_children():
+            widget.destroy()
+
+    # ==================== MÉTODOS DEL MENÚ LATERAL ====================
+    def miembros(self):
+        """Muestra la pantalla de gestión de miembros"""
+        self.screen_miembros.pack(fill="both", expand=True)
+        self.btn_miembros.configure(
+            fg_color=("#3a7ebf", "#1f538d"),
+            text_color=("#ffffff", "#ffffff")
         )
 
-        if not all(datos[:-1]):
-            messagebox.showwarning("Campos vacíos", "Todos los campos son obligatorios")
-            return
+    def toggle_menu(self):
+        """Alterna la visibilidad del menú lateral"""
+        if self.menu_visible:
+            self.pack_forget()
+            self.menu_visible = False
+            self.btn_toggle.place(x=10, y=10)
+        else:
+            self.pack(side="left", fill="y", padx=(0, 5))
+            self.menu_visible = True
+            self.btn_toggle.place(x=260, y=10)
 
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("""
-                UPDATE estudiantes
-                SET nombre=%s, apellido=%s, correo=%s, telefono=%s, fecha_nacimiento=%s
-                WHERE id=%s
-            """, datos)
-            conexion.commit()
-            conexion.close()
-            messagebox.showinfo("Éxito", "Estudiante actualizado correctamente")
-            self.cargar_estudiantes()
-            self.limpiar_campos()
+    def ajustar_posicion_toggle(self, event=None):
+        """Ajusta la posición del botón toggle al redimensionar"""
+        if self.menu_visible:
+            self.btn_toggle.place(x=260, y=10)
+        else:
+            self.btn_toggle.place(x=10, y=10)
 
-    def eliminar_estudiante(self):
-        if not hasattr(self, 'id_estudiante'):
-            messagebox.showwarning("Error", "Selecciona un estudiante para eliminar")
-            return
 
-        confirmar = messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas eliminar este estudiante?")
-        if not confirmar:
-            return
-
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("DELETE FROM estudiantes WHERE id=%s", (self.id_estudiante,))
-            conexion.commit()
-            conexion.close()
-            messagebox.showinfo("Éxito", "Estudiante eliminado")
-            self.cargar_estudiantes()
-            self.limpiar_campos()
-
-    def limpiar_campos(self):
-        self.entry_nombre.delete(0, tk.END)
-        self.entry_apellido.delete(0, tk.END)
-        self.entry_correo.delete(0, tk.END)
-        self.entry_telefono.delete(0, tk.END)
-        self.entry_nacimiento.delete(0, tk.END)
-        if hasattr(self, 'id_estudiante'):
-            del self.id_estudiante
-
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
