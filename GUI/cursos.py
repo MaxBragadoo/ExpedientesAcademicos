@@ -1,64 +1,92 @@
-
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 from db.Conexion import crear_conexion
+from PIL import Image, ImageTk
+import os
 
 class VentanaCursos:
     def __init__(self):
         self.ventana = tk.Toplevel()
         self.ventana.title("Gestión de Cursos e Inscripciones")
-        self.ventana.geometry("800x500")
+        self.ventana.geometry("900x600")
         self.ventana.resizable(False, False)
+        self.ventana.configure(bg="#e6f0f8")
+
+        ruta_original = "C:/Users/Asus ExpertBook/Documents/DECIMO SEMESTRE/TOPICOS DESARROLLO SISTEMAS/U3/ProyectoU5/GUI/halcon.png"
+        if os.path.exists(ruta_original):
+            try:
+                imagen_original = Image.open(ruta_original).convert("RGBA")
+                nueva_imagen = Image.new("RGBA", imagen_original.size, (255, 255, 255, 0))
+                for y in range(imagen_original.height):
+                    for x in range(imagen_original.width):
+                        r, g, b, a = imagen_original.getpixel((x, y))
+                        if r > 240 and g > 240 and b > 240:
+                            nueva_imagen.putpixel((x, y), (255, 255, 255, 0))
+                        else:
+                            nueva_imagen.putpixel((x, y), (r, g, b, a))
+                nueva_imagen_resized = nueva_imagen.resize((200, 100))
+                self.halcon_img = ImageTk.PhotoImage(nueva_imagen_resized)
+                tk.Label(self.ventana, image=self.halcon_img, bg="#e6f0f8").place(x=20, y=10)
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo procesar la imagen del halcón: {e}")
+
+        self.contenedor = tk.Frame(self.ventana, bg="#eaf1fb", bd=1, relief="ridge")
+        self.contenedor.place(x=10, y=120, width=880, height=470)
 
         self.crear_widgets()
         self.cargar_cursos()
         self.cargar_estudiantes()
 
     def crear_widgets(self):
-        # Sección de cursos
-        frame_cursos = tk.LabelFrame(self.ventana, text="Cursos")
-        frame_cursos.pack(fill="x", padx=10, pady=5)
+        estilo_azul = {"bg": "#004c97", "fg": "white", "font": ("Arial", 9, "bold")}
+        estilo_naranja = {"bg": "#f47b20", "fg": "white", "font": ("Arial", 9, "bold")}
+        estilo_rojo = {"bg": "#8b0000", "fg": "white", "font": ("Arial", 9, "bold")}
 
-        tk.Label(frame_cursos, text="Nombre").grid(row=0, column=0)
-        self.entry_nombre = tk.Entry(frame_cursos, width=30)
-        self.entry_nombre.grid(row=0, column=1)
+        frame_cursos = tk.LabelFrame(self.contenedor, text="📘 Cursos", bg="#eaf1fb", fg="#004c97", font=("Arial", 10, "bold"))
+        frame_cursos.pack(fill="x", padx=10, pady=10)
 
-        tk.Label(frame_cursos, text="Descripción").grid(row=1, column=0)
-        self.entry_descripcion = tk.Entry(frame_cursos, width=30)
-        self.entry_descripcion.grid(row=1, column=1)
+        tk.Label(frame_cursos, text="Nombre:", bg="#eaf1fb").grid(row=0, column=0, sticky="e", padx=5, pady=2)
+        self.entry_nombre = tk.Entry(frame_cursos, width=40)
+        self.entry_nombre.grid(row=0, column=1, padx=5, pady=2)
 
-        tk.Label(frame_cursos, text="Créditos").grid(row=2, column=0)
+        tk.Label(frame_cursos, text="Descripción:", bg="#eaf1fb").grid(row=1, column=0, sticky="e", padx=5, pady=2)
+        self.entry_descripcion = tk.Entry(frame_cursos, width=60)
+        self.entry_descripcion.grid(row=1, column=1, columnspan=2, padx=5, pady=2)
+
+        tk.Label(frame_cursos, text="Créditos:", bg="#eaf1fb").grid(row=2, column=0, sticky="e", padx=5, pady=2)
         self.entry_creditos = tk.Entry(frame_cursos, width=10)
-        self.entry_creditos.grid(row=2, column=1)
+        self.entry_creditos.grid(row=2, column=1, sticky="w", padx=5, pady=2)
 
-        tk.Button(frame_cursos, text="Agregar Curso", command=self.agregar_curso).grid(row=3, column=0, pady=10)
-        tk.Button(frame_cursos, text="Actualizar Curso", command=self.actualizar_curso).grid(row=3, column=1)
-        tk.Button(frame_cursos, text="Eliminar Curso", command=self.eliminar_curso).grid(row=3, column=2)
+        tk.Button(frame_cursos, text="Agregar Curso", command=self.agregar_curso, **estilo_azul).grid(row=0, column=2, padx=10)
+        tk.Button(frame_cursos, text="Actualizar Curso", command=self.actualizar_curso, **estilo_naranja).grid(row=1, column=2, padx=10)
+        tk.Button(frame_cursos, text="Eliminar Curso", command=self.eliminar_curso, **estilo_rojo).grid(row=2, column=2, padx=10)
 
-        # Tabla de cursos
-        self.tabla_cursos = ttk.Treeview(self.ventana, columns=("id", "nombre", "descripcion", "creditos"), show="headings")
+        estilo_tabla = ttk.Style()
+        estilo_tabla.theme_use("default")
+        estilo_tabla.configure("Treeview", font=("Arial", 9), rowheight=25, background="#ffffff", fieldbackground="#f8f8f8")
+        estilo_tabla.configure("Treeview.Heading", font=("Arial", 9, "bold"), background="#004c97", foreground="white")
+
+        self.tabla_cursos = ttk.Treeview(self.contenedor, columns=("id", "nombre", "descripcion", "creditos"), show="headings")
         for col in self.tabla_cursos["columns"]:
             self.tabla_cursos.heading(col, text=col.capitalize())
-            self.tabla_cursos.column(col, width=150)
-        self.tabla_cursos.pack(pady=10)
+            self.tabla_cursos.column(col, width=200)
+        self.tabla_cursos.pack(padx=10, pady=10)
         self.tabla_cursos.bind("<<TreeviewSelect>>", self.seleccionar_curso)
 
-        # Inscripciones
-        frame_inscripciones = tk.LabelFrame(self.ventana, text="Inscribir estudiante")
-        frame_inscripciones.pack(fill="x", padx=10, pady=10)
+        frame_inscripciones = tk.LabelFrame(self.contenedor, text="👤 Inscribir estudiante", bg="#eaf1fb", fg="#004c97", font=("Arial", 10, "bold"))
+        frame_inscripciones.pack(fill="x", padx=10, pady=5)
 
-        tk.Label(frame_inscripciones, text="Estudiante:").grid(row=0, column=0)
-        self.combo_estudiantes = ttk.Combobox(frame_inscripciones, state="readonly", width=40)
-        self.combo_estudiantes.grid(row=0, column=1)
+        tk.Label(frame_inscripciones, text="Estudiante:", bg="#eaf1fb").grid(row=0, column=0, sticky="e", padx=5, pady=5)
+        self.combo_estudiantes = ttk.Combobox(frame_inscripciones, state="readonly", width=50)
+        self.combo_estudiantes.grid(row=0, column=1, padx=5)
 
-        tk.Button(frame_inscripciones, text="Inscribir", command=self.inscribir_estudiante).grid(row=0, column=2, padx=5)
-        tk.Button(frame_inscripciones, text="Ver Inscripciones", command=self.ver_inscripciones).grid(row=0, column=3)
+        tk.Button(frame_inscripciones, text="Inscribir", command=self.inscribir_estudiante, bg="#006d2c", fg="white").grid(row=0, column=2, padx=10)
+        tk.Button(frame_inscripciones, text="Ver Inscripciones", command=self.ver_inscripciones).grid(row=0, column=3, padx=10)
+
 
     def cargar_cursos(self):
         for row in self.tabla_cursos.get_children():
             self.tabla_cursos.delete(row)
-
         conexion = crear_conexion()
         if conexion:
             cursor = conexion.cursor()
@@ -93,16 +121,13 @@ class VentanaCursos:
         nombre = self.entry_nombre.get()
         descripcion = self.entry_descripcion.get()
         creditos = self.entry_creditos.get()
-
         if not nombre or not creditos:
             messagebox.showwarning("Campos obligatorios", "Nombre y créditos son obligatorios.")
             return
-
         conexion = crear_conexion()
         if conexion:
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO cursos (nombre, descripcion, creditos) VALUES (%s, %s, %s)",
-                           (nombre, descripcion, creditos))
+            cursor.execute("INSERT INTO cursos (nombre, descripcion, creditos) VALUES (%s, %s, %s)", (nombre, descripcion, creditos))
             conexion.commit()
             conexion.close()
             self.cargar_cursos()
@@ -114,7 +139,6 @@ class VentanaCursos:
         if not hasattr(self, 'id_curso'):
             messagebox.showwarning("Curso no seleccionado", "Selecciona un curso para actualizar.")
             return
-
         conexion = crear_conexion()
         if conexion:
             cursor = conexion.cursor()
@@ -136,7 +160,6 @@ class VentanaCursos:
         if not hasattr(self, 'id_curso'):
             messagebox.showwarning("Curso no seleccionado", "Selecciona un curso para eliminar.")
             return
-
         confirmar = messagebox.askyesno("Confirmar", "¿Deseas eliminar este curso?")
         if confirmar:
             conexion = crear_conexion()
@@ -154,10 +177,8 @@ class VentanaCursos:
         if not self.combo_estudiantes.get():
             messagebox.showwarning("Selecciona estudiante", "Selecciona un estudiante.")
             return
-
         idx = self.combo_estudiantes.current()
         id_estudiante = self.estudiantes[idx][0]
-
         conexion = crear_conexion()
         if conexion:
             cursor = conexion.cursor()
@@ -173,7 +194,6 @@ class VentanaCursos:
         if not hasattr(self, 'id_curso'):
             messagebox.showwarning("Curso no seleccionado", "Selecciona un curso para ver inscripciones.")
             return
-
         conexion = crear_conexion()
         if conexion:
             cursor = conexion.cursor()
@@ -198,3 +218,5 @@ class VentanaCursos:
 
             for fila in resultado:
                 tree.insert("", tk.END, values=fila)
+
+
